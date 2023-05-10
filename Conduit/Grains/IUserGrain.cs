@@ -31,6 +31,7 @@ public class UserGrain : Grain, IUserGrain
             Token = Guid.NewGuid().ToString(),
             Bio = "",
             Img = "",
+            Password = request.Password,
         };
         await _user.WriteStateAsync();
 
@@ -76,4 +77,6 @@ public record User
     public string Bio { get; set; }
     [Id(4)]
     public string Img { get; set; }
+    [Id(5)]
+    public string Password { get; set; }
 }

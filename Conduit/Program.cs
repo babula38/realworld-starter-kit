@@ -28,5 +28,6 @@ app.Map("/dashboard", x => x.UseOrleansDashboard());
 
 app.MapUsers();
 app.MapUser();
+app.MapProfile();
 
 app.Run();
