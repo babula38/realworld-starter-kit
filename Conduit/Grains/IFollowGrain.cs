@@ -4,8 +4,9 @@ namespace Conduit.Grains;
 
 public interface IFollowGrain : IGrainWithStringKey
 {
-    Task<List<Follow>> GetFollows();
-    Task<List<Follow>> Follow(string mailToFollow);
+    Task<List<Follow>> GetFollowers();
+    Task<List<Follow>> Follow(string userName);
+    Task<List<Follow>> UnFollow(string userName);
 }
 
 public class FollowGrain : Grain, IFollowGrain
@@ -19,22 +20,30 @@ public class FollowGrain : Grain, IFollowGrain
         _follows = follows;
     }
 
-    public async Task<List<Follow>> Follow(string mailToFollow)
+    public async Task<List<Follow>> Follow(string userName)
     {
-        _follows.State.Add(new Follow { Email = mailToFollow });
+        _follows.State.Add(new Follow { UserName = userName });
 
         await _follows.WriteStateAsync();
 
         return _follows.State;
     }
 
-    public Task<List<Follow>> GetFollows()
+    public Task<List<Follow>> GetFollowers()
             => Task.FromResult(_follows.State);
+    public async Task<List<Follow>> UnFollow(string userName)
+    {
+        _follows.State.Remove(new Follow { UserName = userName });
+
+        await _follows.WriteStateAsync();
+
+        return _follows.State;
+    }
 }
 
 [GenerateSerializer]
 public record Follow
 {
     [Id(0)]
-    public string Email { get; set; }
+    public string UserName { get; set; }
 }

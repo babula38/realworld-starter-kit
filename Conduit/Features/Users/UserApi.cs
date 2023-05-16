@@ -1,5 +1,5 @@
-using System.Security.Claims;
 using Conduit.Grains;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Conduit.Features.Users;
 
@@ -7,18 +7,23 @@ public static class UserApi
 {
     public static RouteGroupBuilder MapUser(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/user");
-        group.WithTags("Users");
+        RouteGroupBuilder group = routes.MapGroup("/api/user");
+        _ = group.WithTags("Users");
 
-        //TODO: Need to work on as the API contract is not taking any input
-        // group.MapGet("/", async (IGrainFactory grainFactory, IHttpContextAccessor contextAccessor) =>
-        group.MapGet("/{email}", async (IGrainFactory grainFactory, string email) =>
+        //POST /api/user
+        _ = group.MapPost("/", async (IGrainFactory grainFactory, [FromBody] UserRequest request) =>
         {
-            // Claim? email = contextAccessor
-            //     .HttpContext?
-            //     .User?
-            //     .Claims?
-            //     .FirstOrDefault(x => x.Type == ClaimTypes.Email);
+            IUserGrain grain = grainFactory.GetGrain<IUserGrain>(request.Email);
+
+            User user = await grain.CreateUser(request);
+
+            return Results.Ok(new UserApiResponse(user));
+        }).Produces<UserApiResponse>();
+
+        // GET api/user
+        _ = group.MapGet("/", async (IGrainFactory grainFactory, IHttpContextAccessor contextAccessor) =>
+        {
+            string email = contextAccessor.GetUserEmail();
 
             IUserGrain grain = grainFactory.GetGrain<IUserGrain>(email);
 
@@ -27,14 +32,9 @@ public static class UserApi
             return Results.Ok(new UserApiResponse(user));
         }).Produces<UserApiResponse>();
 
-        group.MapPut("/", async (IGrainFactory grainFactory, UserApiRequest request) =>
+        // PUT api/user
+        _ = group.MapPut("/", async (IGrainFactory grainFactory, UserApiRequest request) =>
         {
-            // Claim? email = contextAccessor
-            //     .HttpContext?
-            //     .User?
-            //     .Claims?
-            //     .FirstOrDefault(x => x.Type == ClaimTypes.Email);
-
             IUserGrain grain = grainFactory.GetGrain<IUserGrain>(request.User.Email);
 
             User user = await grain.UpdateUser(request.User);

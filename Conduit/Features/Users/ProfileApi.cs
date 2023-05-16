@@ -7,32 +7,41 @@ public static class ProfileApi
 {
     public static RouteGroupBuilder MapProfile(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/profile");
-        group.WithTags("profile");
+        RouteGroupBuilder group = routes.MapGroup("/api/profile");
+        _ = group.WithTags("profile");
 
-        group.MapGet("/{emailToFollow}", async (IGrainFactory grainFactory, string emailToFollow) =>
+        _ = group.MapGet("/{emailToFollow}", async (IGrainFactory grainFactory, IHttpContextAccessor contextAccessor, string emailToFollow) =>
         {
-            string currentUserEmail = "";
+            string currentUserEmail = contextAccessor.GetUserEmail();
 
-            IFollowGrain followGrain = grainFactory.GetGrain<IFollowGrain>(currentUserEmail);
-            List<Follow> followsOfLoggedInUser = await followGrain.GetFollows();
+            IFollowGrain currentUserFollowGrain = grainFactory.GetGrain<IFollowGrain>(currentUserEmail);
+            List<Follow> followsOfLoggedInUser = await currentUserFollowGrain.GetFollowers();
 
-            bool isFollowing = followsOfLoggedInUser.Any(x => string.Equals(x.Email, emailToFollow, StringComparison.OrdinalIgnoreCase));
+            bool isFollowing = followsOfLoggedInUser.Any(x => string.Equals(x.UserName, emailToFollow, StringComparison.OrdinalIgnoreCase));
 
-            IUserGrain userGrain = grainFactory.GetGrain<IUserGrain>(emailToFollow);
-            User toFollowUser = await userGrain.GetUser();
+            IUserGrain userToGrain = grainFactory.GetGrain<IUserGrain>(emailToFollow);
+            User userToFollow = await userToGrain.GetUser();
 
             return Results.Ok(new ProfileResponse
             {
                 Profile = new ProfileData
                 {
-                    UserName = toFollowUser.UserName,
-                    Bio = toFollowUser.Bio,
-                    Img = toFollowUser.Img,
+                    UserName = userToFollow.UserName,
+                    Bio = userToFollow.Bio,
+                    Img = userToFollow.Img,
                     Following = isFollowing,
                 }
             });
         }).Produces<ProfileResponse>();
+
+        _ = group.MapGet("/test/{key}",
+        async (IGrainFactory grainFactory, string key) =>
+        {
+            var profileGrain = grainFactory.GetGrain<IProfileGrain>(key);
+            User user = await profileGrain.GetUser();
+
+            return Results.Ok(user);
+        });
 
         return group;
     }

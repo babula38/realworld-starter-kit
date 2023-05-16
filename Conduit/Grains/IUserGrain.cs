@@ -13,13 +13,17 @@ public class UserGrain : Grain, IUserGrain
 {
     private readonly IPersistentState<User> _user;
     private readonly ILogger<UserGrain> _logger;
+    private readonly IGrainFactory _grainFactory;
+
     public UserGrain(
-        ILogger<UserGrain> logger,
-        [PersistentState(stateName: "user", storageName: "conduit")] IPersistentState<User> user
-    )
+        ILogger<UserGrain> logger
+        , [PersistentState(stateName: "user", storageName: "conduit")] IPersistentState<User> user
+        , IGrainFactory grainFactory
+        )
     {
         _logger = logger;
         _user = user;
+        _grainFactory = grainFactory;
     }
 
     public async Task<User> CreateUser(UserRequest request)
@@ -36,6 +40,9 @@ public class UserGrain : Grain, IUserGrain
         await _user.WriteStateAsync();
 
         _logger.LogInformation($"UserName:-{request.UserName},Email:-{request.Email},Token:-{_user.State.Token}");
+
+        IProfileGrain profileGrain = _grainFactory.GetGrain<IProfileGrain>(_user.State.UserName);
+        await profileGrain.CreateProfile(this.GetPrimaryKeyString());
 
         return _user.State;
     }

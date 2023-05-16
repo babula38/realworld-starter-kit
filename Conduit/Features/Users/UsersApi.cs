@@ -7,20 +7,10 @@ public static class UsersApi
 {
     public static RouteGroupBuilder MapUsers(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/users");
+        RouteGroupBuilder group = routes.MapGroup("/api/users");
+        _ = group.WithTags("Users");
 
-        group.WithTags("Users");
-
-        group.MapPost("/", async (IGrainFactory grainFactory, [FromBody] UserRequest request) =>
-        {
-            IUserGrain grain = grainFactory.GetGrain<IUserGrain>(request.Email);
-
-            User user = await grain.CreateUser(request);
-
-            return Results.Ok(new UserApiResponse(user));
-        }).Produces<UserApiResponse>();
-
-        group.MapPost("/login", async (IGrainFactory grainFactory, [FromBody] UserRequest request) =>
+        _ = group.MapPost("/login", async (IGrainFactory grainFactory, [FromBody] UserRequest request) =>
         {
             IUserGrain grain = grainFactory.GetGrain<IUserGrain>(request.Email);
 
