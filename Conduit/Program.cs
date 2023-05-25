@@ -43,5 +43,6 @@ app.Use(async (context, next) =>
 app.MapUsers();
 app.MapUser();
 app.MapProfile();
+app.MapArticle();
 
 app.Run();

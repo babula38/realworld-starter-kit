@@ -9,7 +9,7 @@ public static class ProfileApi
         RouteGroupBuilder group = routes.MapGroup("/api/profile");
         _ = group.WithTags("profile");
 
-        _ = group.MapGet("/{userName}/follow", async (IGrainFactory grainFactory, IHttpContextAccessor contextAccessor, string userName) =>
+        _ = group.MapPost("/{userName}/follow", async (IGrainFactory grainFactory, IHttpContextAccessor contextAccessor, string userName) =>
         {
             string currentUserName = contextAccessor.GetUserName();
             string currentUserEmail = contextAccessor.GetUserEmail();
